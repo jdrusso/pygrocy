@@ -779,7 +779,9 @@ class GrocyApiClient(object):
         self._do_post_request(url, data)
 
     def get_meal_plan(self, query_filters: List[str] = None) -> List[MealPlanResponse]:
+        _LOGGER.critical(f"Requesting objects/meal_plan with {query_filters}")
         parsed_json = self._do_get_request("objects/meal_plan", query_filters)
+        _LOGGER.critical(f"Parsed JSON was {parsed_json}")
         if parsed_json:
             return [MealPlanResponse(**data) for data in parsed_json]
         return []
