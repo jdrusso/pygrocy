@@ -792,7 +792,9 @@ class GrocyApiClient(object):
             return RecipeDetailsResponse(**parsed_json)
 
     def get_recipe_fulfillment(self, object_id: int) -> RecipeFulfillmentResponse:
+        _LOGGER.critical(f"Submitting request to fulfillment at recipes/{object_id}/fulfillment")
         parsed_json = self._do_get_request(f"recipes/{object_id}/fulfillment")
+        _LOGGER.critical(f"Got: {parsed_json}")
         if parsed_json:
             return RecipeFulfillmentResponse(**parsed_json)
 

@@ -348,22 +348,29 @@ class Grocy(object):
         # Get the meal plan
         # raw_meal_plan = self._api_client.get_meal_plan(query_filters)[0]
         raw_meal_plan = self._api_client.get_meal_plan(query_filters)[0]
+        _LOGGER.critical(f"Got {raw_meal_plan}")
+
         # Get the recipe ID from the meal plan
         recipe_id = raw_meal_plan.recipe_id
 
         # Get the comma-separated list of ingredients from the meal plan
+        _LOGGER.critical(f"Submitting recipe fulfillment for {recipe_id}")
         recipe_fulfillment = self._api_client.get_recipe_fulfillment(recipe_id)
         recipe_ingredient_names: List[str] = recipe_fulfillment.product_names_comma_separated.split(',')
+        _LOGGER.critical(f"Recipe ingredient names are {recipe_ingredient_names}")
 
         # Get the list of products stored in the freezer
         #   https://grocy.neumann/api/objects/stock_current_locations?query%5B%5D=location_is_freezer%3D1
         stock_in_freezer: List[StockLocationResponse] = self._api_client.get_stock_current_locations(
             query_filters="location_is_freezer=1"
         )
+        _LOGGER.critical(f"Stock in freezer is {stock_in_freezer}")
+
         ids_in_freezer = [stock.product_id for stock in stock_in_freezer]
         # Get the list of product (TODO: Nice-to-have: Filter this by location ID, using the location IDs)
         #   https://grocy.neumann/api/objects/products
         products: List[StockResponse] = self._api_client.get_products()
+        _LOGGER.critical(f"Products got {len(products)} responses, first it {products[0]}")
 
         # For each, resolve the product ID to a product name
         # Products to defrost are:
@@ -373,6 +380,7 @@ class Grocy(object):
             if product.name in recipe_ingredient_names
             and product.id in ids_in_freezer
         ]
+        _LOGGER.critical(f"Products to defrost are {products_to_defrost}")
 
         return products_to_defrost
 
