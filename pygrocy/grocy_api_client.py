@@ -70,7 +70,8 @@ class RecipeDetailsResponse(BaseModel):
 class RecipeFulfillmentResponse(BaseModel):
     id: Optional[int] = None
     recipe_id: int
-    product_names_comma_separated: List[str]
+    # TODO: This should be encoded to a list[str]
+    product_names_comma_separated: str
 
     model_config = ConfigDict(
         extra='allow',
