@@ -14,7 +14,7 @@ from .data_models.system import SystemConfig, SystemInfo, SystemTime
 from .data_models.task import Task
 from .data_models.user import User  # noqa: F401
 from .errors import GrocyError  # noqa: F401
-from .grocy_api_client import ChoreDetailsResponse  # noqa: F401
+from .grocy_api_client import ChoreDetailsResponse, StockLocationResponse, StockResponse  # noqa: F401
 from .grocy_api_client import CurrentChoreResponse  # noqa: F401
 from .grocy_api_client import CurrentStockResponse  # noqa: F401
 from .grocy_api_client import LocationData  # noqa: F401
@@ -339,6 +339,55 @@ class Grocy(object):
             for item in meal_plan:
                 item.get_details(self._api_client)
         return meal_plan
+
+    def to_defrost(
+            self, get_details: bool = False, query_filters: List[str] = None
+    ) -> List[StockResponse]:
+        # TODO: This is very inefficient, but YOLO it gets the job done for now
+
+        # Get the meal plan
+        # raw_meal_plan = self._api_client.get_meal_plan(query_filters)[0]
+        raw_meal_plan = self._api_client.get_meal_plan(query_filters)[0]
+        # Get the recipe ID from the meal plan
+        recipe_id = raw_meal_plan.recipe_id
+
+        # Get the comma-separated list of ingredients from the meal plan
+        recipe_fulfillment = self._api_client.get_recipe_fulfillment(recipe_id)
+        recipe_ingredient_names: List[str] = recipe_fulfillment.product_names_comma_separated.split(',')
+
+        # Get the list of products stored in the freezer
+        #   https://grocy.neumann/api/objects/stock_current_locations?query%5B%5D=location_is_freezer%3D1
+        stock_in_freezer: List[StockLocationResponse] = self._api_client.get_stock_current_locations(
+            query_filters="location_is_freezer=1"
+        )
+        ids_in_freezer = [stock.product_id for stock in stock_in_freezer]
+        # Get the list of product (TODO: Nice-to-have: Filter this by location ID, using the location IDs)
+        #   https://grocy.neumann/api/objects/products
+        products: List[StockResponse] = self._api_client.get_products()
+
+        # For each, resolve the product ID to a product name
+        # Products to defrost are:
+        products_to_defrost: List[StockResponse] = [
+            product
+            for product in products
+            if product.name in recipe_ingredient_names
+            and product.id in ids_in_freezer
+        ]
+
+        return products_to_defrost
+
+        # TODO: Get the list of stock current locations
+        # TODO: Given our list of product IDs for the ingredients, see which have location_is_freezer: 1
+        # Get that list and return it
+
+        # Get the meal plan
+        # raw_meal_plan = self._api_client.get_meal_plan(query_filters)
+        # meal_plan = [MealPlanItem(data) for data in raw_meal_plan]
+        #
+        # if get_details:
+        #     for item in meal_plan:
+        #         item.get_details(self._api_client)
+        # return meal_plan
 
     def recipe(self, recipe_id: int) -> RecipeItem:
         recipe = self._api_client.get_recipe(recipe_id)

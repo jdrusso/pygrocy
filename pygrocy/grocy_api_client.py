@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin
 
 import requests
-from pydantic import BaseModel, Extra, Field, root_validator, validator
+from pydantic import BaseModel, Extra, Field, root_validator, validator, ConfigDict
 from pydantic.schema import date
 
 from pygrocy import EntityType
@@ -66,6 +66,31 @@ class RecipeDetailsResponse(BaseModel):
     picture_file_name: Optional[str]
     row_created_timestamp: datetime
     userfields: Optional[Dict] = None
+
+class RecipeFulfillmentResponse(BaseModel):
+    id: Optional[int] = None
+    recipe_id: int
+    product_names_comma_separated: List[str]
+
+    model_config = ConfigDict(
+        extra='allow',
+    )
+
+class StockLocationResponse(BaseModel):
+    id: Optional[int] = None
+    product_id: int
+    location_id: int
+    location_name: str
+    location_is_freezer: int
+
+class StockResponse(BaseModel):
+    id: Optional[int] = None
+    name: Optional[str] = None
+
+    model_config = ConfigDict(
+        extra='allow',
+    )
+
 
 
 class QuantityUnitData(BaseModel):
@@ -431,6 +456,12 @@ class GrocyApiClient(object):
         if parsed_json:
             return ProductDetailsResponse(**parsed_json)
 
+    def get_product(self, product_id) -> ProductDetailsResponse:
+        url = f"stock/products/{product_id}"
+        parsed_json = self._do_get_request(url)
+        if parsed_json:
+            return ProductDetailsResponse(**parsed_json)
+
     def get_product_by_barcode(self, barcode) -> ProductDetailsResponse:
         url = f"stock/products/by-barcode/{barcode}"
         parsed_json = self._do_get_request(url)
@@ -757,6 +788,21 @@ class GrocyApiClient(object):
         parsed_json = self._do_get_request(f"objects/recipes/{object_id}")
         if parsed_json:
             return RecipeDetailsResponse(**parsed_json)
+
+    def get_recipe_fulfillment(self, object_id: int) -> RecipeFulfillmentResponse:
+        parsed_json = self._do_get_request(f"recipes/{object_id}/fulfillment")
+        if parsed_json:
+            return RecipeFulfillmentResponse(**parsed_json)
+
+    def get_stock_current_locations(self, query_filters: List[str] = None) -> List[StockLocationResponse]:
+        parsed_json = self._do_get_request(f"objects/stock_current_locations", query_filters)
+        if parsed_json:
+            return [StockLocationResponse(**data) for data in parsed_json]
+
+    def get_products(self) -> List[StockResponse]:
+        parsed_json = self._do_get_request(f"objects/products")
+        if parsed_json:
+            return [StockResponse(**data) for data in parsed_json]
 
     def get_batteries(
         self, query_filters: List[str] = None
