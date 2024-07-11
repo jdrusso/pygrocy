@@ -245,7 +245,7 @@ class BatteryDetailsResponse(BaseModel):
 
 class MealPlanSectionResponse(BaseModel):
     id: Optional[int] = None
-    name: str
+    name: Optional[str] = None
     sort_number: Optional[int] = None
     row_created_timestamp: datetime
 
