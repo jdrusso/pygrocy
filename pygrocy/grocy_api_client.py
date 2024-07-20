@@ -780,9 +780,9 @@ class GrocyApiClient(object):
         self._do_post_request(url, data)
 
     def get_meal_plan(self, query_filters: List[str] = None) -> List[MealPlanResponse]:
-        _LOGGER.critical(f"Requesting objects/meal_plan with {query_filters}")
+        _LOGGER.debug(f"Requesting objects/meal_plan with {query_filters}")
         parsed_json = self._do_get_request("objects/meal_plan", query_filters)
-        _LOGGER.critical(f"Parsed JSON was {parsed_json}")
+        _LOGGER.debug(f"Parsed JSON was {parsed_json}")
         if parsed_json:
             return [MealPlanResponse(**data) for data in parsed_json]
         return []
@@ -793,9 +793,9 @@ class GrocyApiClient(object):
             return RecipeDetailsResponse(**parsed_json)
 
     def get_recipe_fulfillment(self, object_id: int) -> RecipeFulfillmentResponse:
-        _LOGGER.critical(f"Submitting request to fulfillment at recipes/{object_id}/fulfillment")
+        _LOGGER.debug(f"Submitting request to fulfillment at recipes/{object_id}/fulfillment")
         parsed_json = self._do_get_request(f"recipes/{object_id}/fulfillment")
-        _LOGGER.critical(f"Got: {parsed_json}")
+        _LOGGER.debug(f"Got: {parsed_json}")
         if parsed_json:
             return RecipeFulfillmentResponse(**parsed_json)
 
